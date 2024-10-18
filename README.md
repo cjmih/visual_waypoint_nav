@@ -36,10 +36,10 @@ Two windows:
 "Heading Animation" shows the extracted yaw orientation from the Visual Odometry algorithm 
 
 # Works in Progress: 
-- Fix DEV_SPACE EKF
-- Dockerize application
-- Make heading animation less deplorable/more sensible
-- Finalize localization on global map in DEV_SPACE -> combine with main
-- Tune PI-Controller in NAV_SPACE
-- Upload camera drivers
-- Hardmount camera and onboard compute platform to drone (currently mounted to gimbal and using post-processing) -> benchtop comms test works as expected (need to confirm signal range->purchase antennas as needed)
+- [ ]  Fix DEV_SPACE EKF
+- [ ] Dockerize application
+- [ ] Make heading animation less deplorable/more sensible
+- [ ] Finalize localization on global map in DEV_SPACE -> combine with main
+- [ ] Tune PI-Controller in NAV_SPACE
+- [ ] Upload camera drivers
+- [ ] Hardmount camera and onboard compute platform to drone (currently mounted to gimbal and using post-processing) -> benchtop comms test works as expected (need to confirm signal range->purchase antennas as needed)
