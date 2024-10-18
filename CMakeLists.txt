@@ -10,7 +10,7 @@ include_directories(${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 add_executable(main 
     main.cpp 
     detect_and_track.cpp 
-    pre_filter.cpp
+    prefilter.cpp
     utils.cpp
 )
 

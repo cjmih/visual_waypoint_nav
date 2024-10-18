@@ -1,26 +1,30 @@
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include<opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <chrono>
 
 using namespace std;
 using namespace cv;
-double average(vector<float> a){
-  int sum = 0; 
+double average(vector<float> a)
+{
+  int sum = 0;
   int n = a.size();
 
-  for(int i = 0; i < n; i++){
+  for (int i = 0; i < n; i++)
+  {
     sum += a[i];
   }
-  return (double)sum/n;
+  return (double)sum / n;
 }
 
-cv::Mat preprocess(const cv::Mat& input);
+cv::Mat preprocess(const cv::Mat &input);
 
-int main(int argc, char **argv) {
-  if (argc != 3) {
+int main(int argc, char **argv)
+{
+  if (argc != 3)
+  {
     cout << "usage: feature_extraction img1 img2" << endl;
     return 1;
   }
@@ -29,30 +33,29 @@ int main(int argc, char **argv) {
 
   assert(img_1.data != nullptr && img_2.data != nullptr);
   // Resize to a common resolution
-  //cv::resize(img_1, img_1, cv::Size(800, 600));
-  //cv::resize(img_2, img_2, cv::Size(800, 600));
-  
-    //     // Combine original image with edges
-//   img_1 = img_1 * 0.7 + edges0 * 0.3;
-//   img_2 = img_2 * 0.7 + edges1 * 0.3;
+  // cv::resize(img_1, img_1, cv::Size(800, 600));
+  // cv::resize(img_2, img_2, cv::Size(800, 600));
+
+  //     // Combine original image with edges
+  //   img_1 = img_1 * 0.7 + edges0 * 0.3;
+  //   img_2 = img_2 * 0.7 + edges1 * 0.3;
   cv::Mat mod0 = preprocess(img_1);
   cv::Mat mod1 = preprocess(img_2);
   cv::Size sz = img_2.size();
   double height = sz.height;
   double width = sz.width;
-  double cx = width/2;
-  double cy = height/2;
-
+  double cx = width / 2;
+  double cy = height / 2;
 
   vector<KeyPoint> keypoints_1, keypoints_2;
   vector<DMatch> matches, good_matches;
 
   Mat descriptors_1, descriptors_2;
   cv::Ptr<cv::Feature2D> detector = cv::ORB::create(3000); // Increase the number of features
-  //Ptr<FeatureDetector> detector = ORB::create();
+  // Ptr<FeatureDetector> detector = ORB::create();
   Ptr<DescriptorExtractor> descriptor = ORB::create();
   Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-  
+
   detector->detect(mod0, keypoints_1);
   detector->detect(mod1, keypoints_2);
 
@@ -63,31 +66,34 @@ int main(int argc, char **argv) {
   matcher->knnMatch(descriptors_1, descriptors_2, knn_matches, 2);
 
   const float ratio_thresh = 0.7f;
-  for (size_t i = 0; i < knn_matches.size(); i++) {
-    if (knn_matches[i].size() >= 2) {
-      if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance) {
+  for (size_t i = 0; i < knn_matches.size(); i++)
+  {
+    if (knn_matches[i].size() >= 2)
+    {
+      if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance)
+      {
         good_matches.push_back(knn_matches[i][0]);
       }
     }
   }
   vector<float> x_pose, y_pose;
 
-  for (size_t i = 0; i < good_matches.size(); i++) {
-    const DMatch& match = good_matches[i];
-    
+  for (size_t i = 0; i < good_matches.size(); i++)
+  {
+    const DMatch &match = good_matches[i];
+
     // Retrieve the keypoints from the keypoints vectors
-    const KeyPoint& keypoint_1 = keypoints_1[match.queryIdx];
-    const KeyPoint& keypoint_2 = keypoints_2[match.trainIdx];
+    const KeyPoint &keypoint_1 = keypoints_1[match.queryIdx];
+    const KeyPoint &keypoint_2 = keypoints_2[match.trainIdx];
     // add the positions of good matches into an array
-    if(keypoint_2.pt.x < cx+200 && keypoint_2.pt.x > cx-200){
-      if(keypoint_2.pt.y < cy+200 && keypoint_2.pt.y > cy-200){
-            x_pose.push_back(keypoint_1.pt.x);
-            y_pose.push_back(keypoint_1.pt.y);
+    if (keypoint_2.pt.x < cx + 200 && keypoint_2.pt.x > cx - 200)
+    {
+      if (keypoint_2.pt.y < cy + 200 && keypoint_2.pt.y > cy - 200)
+      {
+        x_pose.push_back(keypoint_1.pt.x);
+        y_pose.push_back(keypoint_1.pt.y);
       }
     }
-
-
-    
   }
   double avg_x = average(x_pose);
   double avg_y = average(y_pose);
@@ -137,30 +143,29 @@ int main(int argc, char **argv) {
   //   }
   // }
 
-  Mat img_match, img_goodmatch, resized, estimate, resized_estimate; 
+  Mat img_match, img_goodmatch, resized, estimate, resized_estimate;
   int width1 = 1440;
   int height1 = 720;
-  
+
   drawMatches(img_1, keypoints_1, img_2, keypoints_2, matches, img_match);
   drawMatches(img_1, keypoints_1, img_2, keypoints_2, good_matches, img_goodmatch);
 
-  //drawing circle for radius of interest
-  Point center(avg_x,avg_y);
-  int radius = 100; 
-  Scalar line_color(255,255,0);
-  int thickness = 5; 
+  // drawing circle for radius of interest
+  Point center(avg_x, avg_y);
+  int radius = 100;
+  Scalar line_color(255, 255, 0);
+  int thickness = 5;
   estimate = img_1;
   // drawKeypoints(img1, keypoints_1, img_out, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
   circle(estimate, center, radius, line_color, thickness);
 
-
-  //imshow("all matches", img_match);
-  resize(img_goodmatch, resized, Size(width1,height1), INTER_LINEAR);
+  // imshow("all matches", img_match);
+  resize(img_goodmatch, resized, Size(width1, height1), INTER_LINEAR);
   resize(estimate, resized_estimate, Size(width1, height1), INTER_LINEAR);
 
-  imwrite("results_matching.jpg", resized);  
+  imwrite("results_matching.jpg", resized);
 
-  //imshow("good matches", img_goodmatch);
+  // imshow("good matches", img_goodmatch);
   imshow("Good Match Results", resized);
   imshow("test", img_1);
 
@@ -172,8 +177,8 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-
-cv::Mat preprocess(const cv::Mat& input){
+cv::Mat preprocess(const cv::Mat &input)
+{
   cv::Mat gray, equalized, thresh, canny, dilated, eroded, gauss, cont;
   cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
   int thresh_low = 0;
@@ -185,29 +190,31 @@ cv::Mat preprocess(const cv::Mat& input){
   //    Apply histogram equalization
   cv::equalizeHist(gray, equalized);
   cv::threshold(equalized, thresh, thresh_low, thresh_high, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    // Edge detection
+  // Edge detection
   cv::Canny(thresh, canny, 50, 150);
   cv::dilate(canny, dilated, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3)));
   cv::erode(dilated, eroded, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3)));
 
   cv::GaussianBlur(eroded, gauss, cv::Size(3, 3), 0.75);
-    // Find contours
+  // Find contours
   std::vector<std::vector<cv::Point>> contours;
 
   cv::findContours(gauss, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-    
-    // Create a mask for large contours (runway)
+
+  // Create a mask for large contours (runway)
   cv::Mat mask = cv::Mat::zeros(input.size(), CV_8UC1);
-  for (const auto& contour : contours) {
-      if (cv::contourArea(contour) > 1000) { // Adjust this threshold as needed
-          cv::drawContours(mask, std::vector<std::vector<cv::Point>>{contour}, 0, cv::Scalar(255), -1);
-      }
+  for (const auto &contour : contours)
+  {
+    if (cv::contourArea(contour) > 1000)
+    { // Adjust this threshold as needed
+      cv::drawContours(mask, std::vector<std::vector<cv::Point>>{contour}, 0, cv::Scalar(255), -1);
+    }
   }
   cv::imshow("maskedimage", mask);
   waitKey(0);
-    // Combine original image with the mask
+  // Combine original image with the mask
   cv::Mat masked;
   input.copyTo(masked, mask);
-  //return masked;
+  // return masked;
   return gauss;
 }
